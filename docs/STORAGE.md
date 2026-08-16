@@ -65,13 +65,13 @@ Build gerado com Zeus CLI 1.9.3 e produto intermediário removido por `zeus prun
 
 | Medida | Tamanho real |
 |---|---:|
-| ZAB | 12,92 KB (13.233 B) |
-| JavaScript-fonte do app | 19,17 KB (19.635 B) |
-| Código compilado | 18,72 KB (19.165 B) |
-| Assets no payload | 5,06 KB (5.184 B) |
+| ZAB | 13,58 KB (13.901 B) |
+| JavaScript-fonte do app | 19,53 KB (19.994 B) |
+| Código compilado | 18,89 KB (19.343 B) |
+| Assets no payload | 4,82 KB (4.932 B) |
 | Assets-fonte | 199 B |
-| Payload instalado | 24,52 KB (25.112 B) |
+| Payload instalado | 24,45 KB (25.038 B) |
 | Save estimado | 1,24 KB (1.266 B) |
 | Pico temporário de escrita segura | 3,71 KB (3.798 B) |
 
-Maior arquivo-fonte do app: `page/index.js`, 7,20 KB. Maior arquivo no payload: `page/index.bin`, 11,84 KB. Único asset: ícone obrigatório do app. Sprites de personagem: 0.
+Maior arquivo-fonte do app: `page/index.js`, 7,25 KB. Maior arquivo no payload: `page/index.bin`, 12,00 KB. Único asset: ícone obrigatório do app, 4,82 KB no payload. Sprites de personagem: 0.
