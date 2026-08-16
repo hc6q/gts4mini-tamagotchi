@@ -1,0 +1,13 @@
+{
+  "name": "gts4mini-tamagotchi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "zeus build && zeus prune --ip && node tools/storage-report.cjs",
+    "build:zab": "zeus build && zeus prune --ip",
+    "test": "node --test tests/*.test.mjs",
+    "storage-report": "node tools/storage-report.cjs",
+    "check": "npm test && npm run storage-report"
+  }
+}
