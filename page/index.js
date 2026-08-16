@@ -182,7 +182,12 @@ Page({
     widgets.diary = hmUI.createWidget(hmUI.widget.BUTTON, {
       ...buttonProps(176, 344, 'DIARIO'),
       click_func: () => {
-        this.persist()
+        if (!this.persist()) {
+          widgets.message.setProperty(hmUI.prop.MORE, {
+            text: '> ERRO SAVE',
+          })
+          return
+        }
         hmApp.gotoPage({ url: 'page/diary' })
       },
     })
@@ -260,8 +265,13 @@ Page({
       return
     }
     syncSensors(this.state.save, snapshot, snapshot.now)
-    this.persist()
+    const saved = this.persist()
     this.render()
+    if (!saved) {
+      this.state.widgets.message.setProperty(hmUI.prop.MORE, {
+        text: '> ERRO SAVE',
+      })
+    }
   },
 
   tick() {
@@ -272,7 +282,7 @@ Page({
   },
 
   persist() {
-    if (this.state.save) savePet(this.state.save)
+    return this.state.save ? savePet(this.state.save) : false
   },
 
   onHide() {

@@ -10,7 +10,7 @@ Tamagotchi compacto para o Amazfit GTS 4 Mini. O Mini Program foi projetado para
 - Passos atuais, último valor de frequência cardíaca e último score de sono.
 - Diário numérico limitado a 15 eventos.
 - Save único e compacto em `/data/pet.dat`.
-- Gravação segura com arquivo temporário, validação, backup e `hmFS.rename`.
+- Gravação verificada com arquivo temporário, recuperação e escrita direta do save principal.
 - Interface de terminal com rostos de texto compactos, medidores e separadores em ASCII.
 - Barra de status oculta e controles sem grandes blocos preenchidos.
 - Um único PNG de 64 × 64 para o ícone obrigatório do aplicativo.
@@ -64,7 +64,7 @@ O save usa chaves curtas. Um evento do diário ocupa três números:
 [timestamp, eventType, value]
 ```
 
-Os textos ficam no código e são montados somente na interface. O pior caso atual estimado do save ocupa 1,24 KB no formato `Uint16Array` usado pelo Zepp OS 1.0. Durante uma gravação segura podem existir temporariamente `pet.dat`, `pet.tmp` e `pet.bak`.
+Os textos ficam no código e são montados somente na interface. O pior caso atual estimado do save ocupa 1,24 KB no formato `Uint16Array` usado pelo Zepp OS 1.0. Durante uma gravação podem coexistir temporariamente `pet.dat` e `pet.tmp`. Um `pet.bak` antigo ainda pode ser lido para recuperação.
 
 Permadeath não está ativo nesta versão. Por isso não existe cemitério ou estrutura persistente sem uso.
 
@@ -84,7 +84,7 @@ A documentação oficial consultada não publica um limite máximo para o ZAB ne
 
 - [Dispositivos Zepp OS: GTS 4 Mini, tela e deviceSource](https://docs.zepp.com/docs/1.0/reference/related-resources/device-list/)
 - [Persistência de dados com hmFS](https://docs.zepp.com/docs/1.0/guides/best-practice/persistence-storage/)
-- [hmFS.rename no Zepp OS 1.0](https://docs.zepp.com/docs/1.0/reference/device-app-api/hmFS/rename/)
+- [hmFS.write no Zepp OS 1.0](https://docs.zepp.com/docs/1.0/reference/device-app-api/hmFS/write/)
 - [Zeus CLI e geração do ZAB](https://docs.zepp.com/docs/1.0/guides/tools/cli/)
 
 ## Limitações da versão 0.1

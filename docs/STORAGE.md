@@ -30,14 +30,15 @@ Dados não persistidos:
 
 1. Serializa o objeto.
 2. Recusa conteúdo acima da meta interna de 10 KB.
-3. Escreve `pet.tmp`.
-4. Lê e valida o conteúdo temporário.
-5. Move o save anterior para `pet.bak`.
-6. Promove `pet.tmp` para `pet.dat` com `hmFS.rename`.
-7. Remove o backup depois do sucesso.
-8. Em uma inicialização com save principal inválido, tenta o backup e o temporário.
+3. Remove um temporário antigo.
+4. Escreve e valida `pet.tmp`.
+5. Escreve `pet.dat` diretamente com `hmFS.write`.
+6. Lê e valida o save principal.
+7. Mantém `pet.tmp` se a gravação principal falhar.
+8. Remove temporário e backup antigo depois do sucesso.
+9. Na inicialização, tenta temporário, principal e backup, nessa ordem.
 
-O pico temporário esperado é três vezes o tamanho do save. No estado normal existe somente `pet.dat`.
+O fluxo não depende mais de `hmFS.rename`. O pico conservador continua sendo três vezes o tamanho do save. No estado normal existe somente `pet.dat`.
 
 ## Auditoria
 
@@ -61,13 +62,13 @@ Build gerado com Zeus CLI 1.9.3 e produto intermediário removido por `zeus prun
 
 | Medida | Tamanho real |
 |---|---:|
-| ZAB | 13,02 KB (13.333 B) |
-| JavaScript-fonte do app | 19,22 KB (19.680 B) |
-| Código compilado | 18,95 KB (19.400 B) |
+| ZAB | 12,92 KB (13.233 B) |
+| JavaScript-fonte do app | 19,17 KB (19.635 B) |
+| Código compilado | 18,72 KB (19.165 B) |
 | Assets no payload | 5,06 KB (5.184 B) |
 | Assets-fonte | 199 B |
-| Payload instalado | 24,75 KB (25.347 B) |
+| Payload instalado | 24,52 KB (25.112 B) |
 | Save estimado | 1,24 KB (1.266 B) |
 | Pico temporário de escrita segura | 3,71 KB (3.798 B) |
 
-Maior arquivo-fonte do app: `page/index.js`, 6,92 KB. Maior arquivo no payload: `page/index.bin`, 11,89 KB. Único asset: ícone obrigatório do app. Sprites de personagem: 0.
+Maior arquivo-fonte do app: `page/index.js`, 7,20 KB. Maior arquivo no payload: `page/index.bin`, 11,84 KB. Único asset: ícone obrigatório do app. Sprites de personagem: 0.

@@ -59,59 +59,48 @@ function readSave(path, nowSec) {
   }
 }
 
-function writeTemp(text) {
+function writeText(path, text) {
   const units = encode(text)
   if (units.byteLength > MAX_SAVE_BYTES) return false
   const file = hmFS.open(
-    TEMP_FILE,
+    path,
     hmFS.O_RDWR | hmFS.O_CREAT | hmFS.O_TRUNC,
   )
   if (file < 0) return false
 
   const result = hmFS.write(file, units.buffer, 0, units.byteLength)
   hmFS.close(file)
-  return result === 0
+  return result === 0 && readText(path) === text
 }
 
 export function savePet(save) {
   const text = JSON.stringify(save)
   if (text === lastWrittenText) return true
-  if (!writeTemp(text)) {
-    remove(TEMP_FILE)
-    return false
-  }
 
-  const check = readText(TEMP_FILE)
-  if (check !== text) {
-    remove(TEMP_FILE)
-    return false
-  }
-
-  try {
-    JSON.parse(check)
-  } catch (error) {
-    remove(TEMP_FILE)
-    return false
-  }
-
-  remove(BACKUP_FILE)
-  if (exists(SAVE_FILE) && hmFS.rename(SAVE_FILE, BACKUP_FILE) !== 0) {
-    remove(TEMP_FILE)
-    return false
-  }
-
-  if (hmFS.rename(TEMP_FILE, SAVE_FILE) === 0) {
-    remove(BACKUP_FILE)
-    lastWrittenText = text
-    return true
-  }
-
-  if (exists(BACKUP_FILE)) hmFS.rename(BACKUP_FILE, SAVE_FILE)
   remove(TEMP_FILE)
-  return false
+  if (!writeText(TEMP_FILE, text)) {
+    remove(TEMP_FILE)
+    return false
+  }
+
+  if (!writeText(SAVE_FILE, text)) {
+    remove(SAVE_FILE)
+    return false
+  }
+
+  remove(TEMP_FILE)
+  remove(BACKUP_FILE)
+  lastWrittenText = text
+  return true
 }
 
 export function loadPet(nowSec) {
+  const temporary = readSave(TEMP_FILE, nowSec)
+  if (temporary) {
+    savePet(temporary)
+    return temporary
+  }
+
   const main = readSave(SAVE_FILE, nowSec)
   if (main) {
     lastWrittenText = JSON.stringify(main)
@@ -122,12 +111,6 @@ export function loadPet(nowSec) {
   if (backup) {
     savePet(backup)
     return backup
-  }
-
-  const temporary = readSave(TEMP_FILE, nowSec)
-  if (temporary) {
-    savePet(temporary)
-    return temporary
   }
 
   return createSave(nowSec)

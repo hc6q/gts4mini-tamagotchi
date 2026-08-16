@@ -14,6 +14,7 @@ function createMockFs() {
     O_TRUNC: 8,
     SEEK_SET: 0,
     files,
+    failWritesFor: new Set(),
     stat(path) {
       const data = files.get(path)
       return data ? [{ size: data.length, mtime: 0 }, 0] : [null, -1]
@@ -48,6 +49,7 @@ function createMockFs() {
     },
     write(id, buffer, offset, length) {
       const handle = handles.get(id)
+      if (api.failWritesFor.has(handle.path)) return -1
       const source = new Uint8Array(buffer).slice(offset, offset + length)
       files.set(handle.path, source)
       handle.position += length
@@ -57,10 +59,7 @@ function createMockFs() {
       return files.delete(path) ? 0 : -1
     },
     rename(oldPath, newPath) {
-      if (!files.has(oldPath) || files.has(newPath)) return -1
-      files.set(newPath, files.get(oldPath))
-      files.delete(oldPath)
-      return 0
+      throw new Error(`rename must not be used: ${oldPath} -> ${newPath}`)
     },
   }
   return api
@@ -71,7 +70,7 @@ function bytes(text) {
   return new Uint8Array(units.buffer)
 }
 
-test('safe write validates then atomically promotes the temporary save', async () => {
+test('safe write validates temporary and principal files without rename', async () => {
   globalThis.hmFS = createMockFs()
   const storage = await import('../utils/storage.js?write-test')
   const save = createSave(1000)
@@ -122,4 +121,25 @@ test('needs survive diary navigation and a fresh app runtime', async () => {
   const reopenedApp = await import('../utils/storage.js?reopened-app')
   const afterReopen = reopenedApp.loadPet(3020)
   assert.deepEqual([afterReopen.h, afterReopen.m, afterReopen.e], [31, 47, 59])
+})
+
+test('a valid temporary file recovers a failed principal write', async () => {
+  globalThis.hmFS = createMockFs()
+  const firstRuntime = await import('../utils/storage.js?failed-write')
+  const save = createSave(4000)
+  save.h = 22
+  save.m = 33
+  save.e = 44
+  hmFS.failWritesFor.add('pet.dat')
+
+  assert.equal(firstRuntime.savePet(save), false)
+  assert.ok(hmFS.files.has('pet.tmp'))
+  assert.equal(hmFS.files.has('pet.dat'), false)
+
+  hmFS.failWritesFor.delete('pet.dat')
+  const nextRuntime = await import('../utils/storage.js?temp-recovery')
+  const recovered = nextRuntime.loadPet(4010)
+  assert.deepEqual([recovered.h, recovered.m, recovered.e], [22, 33, 44])
+  assert.ok(hmFS.files.has('pet.dat'))
+  assert.equal(hmFS.files.has('pet.tmp'), false)
 })
