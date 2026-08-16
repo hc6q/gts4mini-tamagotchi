@@ -16,17 +16,19 @@ const DIM = 0x4e8b60
 const AMBER = 0xffcf70
 const PRESSED = 0x102a18
 
-const ASCII_PETS = [
-  '  .----.\n /      \\\n|  o  o  |\n \\__--__/',
-  '  /\\_/\\\n ( o.o )\n  > ^ <',
-  ' /|___|\\\n(  o o  )\n|   v   |\n \\_____/',
-  ' /^^^^^\\\n|  o o  |\n|   -   |\n \\_____/',
-  ' /-----\\\n|  o o  |\n|   v   |\n|_______|',
-  'O/-----\\O\n | o o |\n /  ^  \\\n/_______\\',
-  ' .-----.\n|  - -  |\n|   z   |\n \'-----\'',
-  ' /-----\\\n|  o o  |\n| \\___/ |\n \\_____/',
-  ' /!   !\\\n|  @ @  |\n|   #   |\n \\_____/',
+const TEXT_FACES = [
+  '(._.)',
+  'ʕ•ᴥ•ʔ',
+  '(•ω•)',
+  '(¬‿¬)',
+  '(｡◕‿◕｡)',
+  'ᕦ(ò_óˇ)ᕤ',
+  '(─‿‿─)',
+  '☜(⌒▽⌒)☞',
+  "(ʘᗩʘ')",
 ]
+
+const SLEEP_FACE = '(─‿‿─) zZ'
 
 function textProps(x, y, w, h, size, color, align) {
   return {
@@ -67,12 +69,9 @@ function meter(label, value) {
   return `${label} [${cells}] ${value}`
 }
 
-function asciiPet(stage, sleeping, blink) {
-  let art = ASCII_PETS[stage] || ASCII_PETS[0]
-  if (sleeping || blink) {
-    art = art.replace(/o/g, '-').replace(/@/g, '-')
-  }
-  return sleeping ? `${art}\n      zZ` : art
+function petFace(stage, sleeping) {
+  if (sleeping) return SLEEP_FACE
+  return TEXT_FACES[stage] || TEXT_FACES[0]
 }
 
 Page({
@@ -81,7 +80,6 @@ Page({
     sensors: {},
     widgets: {},
     timerId: 0,
-    frame: 1,
   },
 
   onInit() {
@@ -154,23 +152,20 @@ Page({
       hmUI.widget.TEXT,
       textProps(24, 93, 288, 22, 16, GREEN, hmUI.align.LEFT),
     )
-    this.createDivider(117)
-
     widgets.pet = hmUI.createWidget(hmUI.widget.TEXT, {
-      ...textProps(18, 126, 300, 111, 21, GREEN, hmUI.align.CENTER_H),
+      ...textProps(18, 132, 300, 76, 30, GREEN, hmUI.align.CENTER_H),
       align_v: hmUI.align.CENTER_V,
-      text_style: hmUI.text_style.WRAP,
     })
 
     widgets.message = hmUI.createWidget(
       hmUI.widget.TEXT,
-      textProps(18, 241, 300, 24, 16, AMBER, hmUI.align.CENTER_H),
+      textProps(18, 218, 300, 24, 16, AMBER, hmUI.align.CENTER_H),
     )
     widgets.meta = hmUI.createWidget(
       hmUI.widget.TEXT,
-      textProps(18, 267, 300, 20, 14, DIM, hmUI.align.CENTER_H),
+      textProps(18, 250, 300, 20, 14, DIM, hmUI.align.CENTER_H),
     )
-    this.createDivider(289)
+    this.createDivider(280)
 
     widgets.feed = hmUI.createWidget(hmUI.widget.BUTTON, {
       ...buttonProps(18, 301, 'COMER'),
@@ -194,8 +189,8 @@ Page({
 
     this.render()
     this.state.timerId = timer.createTimer(
-      500,
-      500,
+      4000,
+      4000,
       () => this.tick(),
       {},
     )
@@ -211,7 +206,7 @@ Page({
   renderPet() {
     const save = this.state.save
     this.state.widgets.pet.setProperty(hmUI.prop.MORE, {
-      text: asciiPet(save.x, save.sl === 1, this.state.frame === 0),
+      text: petFace(save.x, save.sl === 1),
       color: save.sl === 1 ? DIM : GREEN,
     })
   },
@@ -270,10 +265,6 @@ Page({
   },
 
   tick() {
-    this.state.frame = (this.state.frame + 1) % 8
-    this.renderPet()
-    if (this.state.frame !== 0) return
-
     const snapshot = this.readSnapshot()
     applyElapsed(this.state.save, snapshot.now)
     syncSensors(this.state.save, snapshot, snapshot.now)
