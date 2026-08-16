@@ -8,6 +8,9 @@ Tamagotchi compacto para o Amazfit GTS 4 Mini. O Mini Program foi projetado para
 - Fome, humor, energia, alimentação, brincadeira e sono.
 - Evolução calculada pelo tempo e pelos cuidados.
 - Passos atuais, último valor de frequência cardíaca e último score de sono.
+- Falas contextuais curtas, calculadas sem salvar textos ou histórico adicional.
+- Seis conquistas compactas registradas no diário por um bitmask numérico.
+- O sono do usuário também recupera a energia do pet; 8 horas levam de 0 a 100.
 - Diário numérico limitado a 15 eventos.
 - Save único e compacto em `/data/pet.dat`.
 - Gravação verificada com arquivo temporário, recuperação e escrita direta do save principal.
@@ -17,7 +20,7 @@ Tamagotchi compacto para o Amazfit GTS 4 Mini. O Mini Program foi projetado para
 - Um único PNG de 64 × 64 para o ícone obrigatório do aplicativo.
 - Zero sprites de personagem, áudio, vídeo, GIF, fonte customizada ou dependência de runtime.
 
-O aplicativo não guarda históricos completos dos sensores. Ele salva somente os agregados usados pelas mecânicas.
+O aplicativo não guarda históricos completos dos sensores. Ele salva somente os agregados usados pelas mecânicas. Do sono, processa uma vez por dia apenas a duração total, a data e o score; os estágios não são copiados para o save.
 
 ## Compatibilidade
 
@@ -90,6 +93,7 @@ A documentação oficial consultada não publica um limite máximo para o ZAB ne
 - [Dispositivos Zepp OS: GTS 4 Mini, tela e deviceSource](https://docs.zepp.com/docs/1.0/reference/related-resources/device-list/)
 - [Persistência de dados com hmFS](https://docs.zepp.com/docs/1.0/guides/best-practice/persistence-storage/)
 - [hmFS.write no Zepp OS 1.0](https://docs.zepp.com/docs/1.0/reference/device-app-api/hmFS/write/)
+- [Sensor de sono no Zepp OS 1.0](https://docs.zepp.com/docs/1.0/reference/device-app-api/hmSensor/sensorId/SLEEP/)
 - [Zeus CLI e geração do ZAB](https://docs.zepp.com/docs/1.0/guides/tools/cli/)
 
 ## Limitações da versão 0.1

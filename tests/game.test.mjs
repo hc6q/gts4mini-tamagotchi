@@ -2,15 +2,20 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  ACHIEVEMENT,
+  ACHIEVEMENT_TOTAL,
   EVENT,
   MAX_DIARY_EVENTS,
   MAX_SAVE_BYTES,
   STAGE,
   addEvent,
+  achievementCount,
   applyElapsed,
+  contextText,
   createSave,
   performAction,
   sanitizeSave,
+  sleepCreditSeconds,
   syncSensors,
   updateEvolution,
 } from '../utils/game.js'
@@ -36,8 +41,16 @@ test('elapsed time drains awake needs and restores sleeping energy', () => {
   sleeping.e = 50
   sleeping.sl = 1
   applyElapsed(sleeping, 3600)
-  assert.equal(sleeping.e, 54)
+  assert.equal(sleeping.e, 62)
   assert.equal(sleeping.h, 81)
+})
+
+test('zero to full energy takes exactly eight sleeping hours', () => {
+  const save = createSave(0)
+  save.e = 0
+  save.sl = 1
+  applyElapsed(save, 8 * 3600)
+  assert.equal(save.e, 100)
 })
 
 test('sleep is reduced to one daily score and aggregate counters', () => {
@@ -46,6 +59,7 @@ test('sleep is reduced to one daily score and aggregate counters', () => {
     date: 20260816,
     steps: 8421,
     sleepScore: 82,
+    sleepMinutes: 450,
     heartRate: 64,
   }
   syncSensors(save, snapshot, 200)
@@ -56,7 +70,63 @@ test('sleep is reduced to one daily score and aggregate counters', () => {
   assert.equal(save.bd, 0)
   assert.equal(save.st, 8421)
   assert.equal(save.hr, 64)
+  assert.equal(save.d.filter((item) => item[1] === EVENT.USER_SLEEP).length, 1)
   assert.equal(save.d.filter((item) => item[1] === EVENT.GOOD_SLEEP).length, 1)
+})
+
+test('user sleep restores energy once per processed date', () => {
+  const save = createSave(0)
+  save.e = 0
+  const snapshot = {
+    date: 20260816,
+    steps: 0,
+    sleepScore: 82,
+    sleepMinutes: 480,
+    heartRate: 0,
+  }
+
+  const credit = sleepCreditSeconds(save, snapshot, 8 * 3600)
+  assert.equal(credit, 8 * 3600)
+  applyElapsed(save, 8 * 3600, credit)
+  syncSensors(save, snapshot, 8 * 3600)
+
+  assert.equal(save.e, 100)
+  assert.equal(save.sp, 20260816)
+  assert.equal(sleepCreditSeconds(save, snapshot, 9 * 3600), 0)
+})
+
+test('achievements use one compact bitmask and never duplicate', () => {
+  const save = createSave(0)
+  performAction(save, 'feed', 60, 12)
+  performAction(save, 'feed', 120, 12)
+  performAction(save, 'play', 180, 12)
+  performAction(save, 'play', 240, 12)
+  syncSensors(save, {
+    date: 20260816,
+    steps: 8421,
+    sleepScore: 82,
+    sleepMinutes: 480,
+    heartRate: 60,
+  }, 300)
+  updateEvolution(save, 72 * 3600)
+
+  assert.equal(achievementCount(save), ACHIEVEMENT_TOTAL)
+  assert.equal(save.a, (1 << ACHIEVEMENT_TOTAL) - 1)
+  assert.equal(
+    save.d.filter((item) => item[1] === EVENT.ACHIEVEMENT).length,
+    ACHIEVEMENT_TOTAL,
+  )
+  assert.ok((save.a & (1 << ACHIEVEMENT.FIRST_FEED)) !== 0)
+})
+
+test('context speech reacts to needs and recent events', () => {
+  const save = createSave(0)
+  save.d = []
+  save.e = 10
+  assert.equal(contextText(save, 12, 100), 'Milo: preciso dormir.')
+
+  addEvent(save, 100, EVENT.PLAYED)
+  assert.equal(contextText(save, 12, 105), 'Milo brincou.')
 })
 
 test('adult athlete evolution uses the compact maximum-step aggregate', () => {
@@ -79,10 +149,12 @@ test('sanitization clamps corrupt values and bounds collections', () => {
   const raw = createSave(100)
   raw.h = 999
   raw.m = -20
+  raw.a = 999
   raw.d = Array.from({ length: 50 }, (_, index) => [index, 2, index])
   const clean = sanitizeSave(raw, 200)
   assert.equal(clean.h, 100)
   assert.equal(clean.m, 0)
+  assert.equal(clean.a, (1 << ACHIEVEMENT_TOTAL) - 1)
   assert.equal(clean.d.length, MAX_DIARY_EVENTS)
 })
 
@@ -96,6 +168,7 @@ test('worst-case current save remains below the internal 10 KB target', () => {
   save.mx = 1000000
   save.gd = 1000000
   save.bd = 1000000
+  save.a = (1 << ACHIEVEMENT_TOTAL) - 1
   save.d = Array.from({ length: MAX_DIARY_EVENTS }, (_, index) => [
     2147483000 + index,
     255,

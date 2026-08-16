@@ -1,4 +1,9 @@
-import { eventText, MAX_DIARY_EVENTS } from '../utils/game.js'
+import {
+  achievementCount,
+  ACHIEVEMENT_TOTAL,
+  eventText,
+  MAX_DIARY_EVENTS,
+} from '../utils/game.js'
 import { loadPet } from '../utils/storage.js'
 
 const BG = 0x030604
@@ -69,7 +74,7 @@ Page({
 
     hmUI.createWidget(hmUI.widget.TEXT, {
       ...textProps(18, 310, 300, 20, 13, DIM, hmUI.align.CENTER_H),
-      text: `EVENTOS:${this.state.save.d.length}/${MAX_DIARY_EVENTS}`,
+      text: `EVENTOS:${this.state.save.d.length}/${MAX_DIARY_EVENTS}  CONQ:${achievementCount(this.state.save)}/${ACHIEVEMENT_TOTAL}`,
     })
     hmUI.createWidget(hmUI.widget.BUTTON, {
       x: 88,

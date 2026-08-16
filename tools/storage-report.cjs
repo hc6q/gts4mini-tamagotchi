@@ -108,6 +108,7 @@ async function estimatedSaveSize() {
   save.mx = 1000000
   save.gd = 1000000
   save.bd = 1000000
+  save.a = (1 << game.ACHIEVEMENT_TOTAL) - 1
   save.d = Array.from({ length: game.MAX_DIARY_EVENTS }, (_, index) => [
     2147483000 + index,
     255,

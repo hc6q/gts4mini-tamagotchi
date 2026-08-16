@@ -1,8 +1,9 @@
 import {
   ageText,
   applyElapsed,
-  eventText,
+  contextText,
   performAction,
+  sleepCreditSeconds,
   stageName,
   syncSensors,
 } from '../utils/game.js'
@@ -88,21 +89,32 @@ Page({
     this.state.sensors.heart = hmSensor.createSensor(hmSensor.id.HEART)
     this.state.sensors.sleep = hmSensor.createSensor(hmSensor.id.SLEEP)
 
-    const snapshot = this.readSnapshot()
+    const snapshot = this.readSnapshot(true)
     this.state.save = loadPet(snapshot.now)
-    applyElapsed(this.state.save, snapshot.now)
+    const sleepSeconds = sleepCreditSeconds(
+      this.state.save,
+      snapshot,
+      snapshot.now,
+    )
+    applyElapsed(this.state.save, snapshot.now, sleepSeconds)
     syncSensors(this.state.save, snapshot, snapshot.now)
   },
 
-  readSnapshot() {
+  readSnapshot(includeSleep = false) {
     const sensors = this.state.sensors
     const clock = sensors.time
     let sleepScore = 0
-    try {
-      const basic = sensors.sleep.getBasicInfo()
-      sleepScore = basic && basic.score ? basic.score : 0
-    } catch (error) {
-      sleepScore = 0
+    let sleepMinutes = 0
+    if (includeSleep) {
+      try {
+        sensors.sleep.updateInfo()
+        const basic = sensors.sleep.getBasicInfo()
+        sleepScore = basic && basic.score ? basic.score : 0
+        sleepMinutes = sensors.sleep.getTotalTime() || 0
+      } catch (error) {
+        sleepScore = 0
+        sleepMinutes = 0
+      }
     }
 
     const utc = clock && clock.utc ? clock.utc : new Date().getTime()
@@ -116,6 +128,7 @@ Page({
       steps: sensors.step.current || 0,
       heartRate: sensors.heart.last || 0,
       sleepScore,
+      sleepMinutes,
     }
   },
 
@@ -220,7 +233,6 @@ Page({
     const save = this.state.save
     const snapshot = this.readSnapshot()
     const widgets = this.state.widgets
-    const latest = save.d[save.d.length - 1]
 
     widgets.header.setProperty(hmUI.prop.MORE, {
       text: `> ${save.n.toUpperCase()} [${stageName(save.x).toUpperCase()}]`,
@@ -238,7 +250,7 @@ Page({
       text: meter('ENERG', save.e),
     })
     widgets.message.setProperty(hmUI.prop.MORE, {
-      text: `> ${eventText(latest, save.n)}`,
+      text: `> ${contextText(save, snapshot.hour, snapshot.now)}`,
     })
     widgets.meta.setProperty(hmUI.prop.MORE, {
       text: `PASSOS:${save.st}  SONO:${save.ss || '--'}  FC:${save.hr || '--'}`,

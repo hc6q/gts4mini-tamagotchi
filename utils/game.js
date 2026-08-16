@@ -22,7 +22,21 @@ export const EVENT = {
   EVOLVED: 6,
   GOOD_SLEEP: 7,
   BAD_SLEEP: 8,
+  USER_SLEEP: 9,
+  ACHIEVEMENT: 10,
 }
+
+export const ACHIEVEMENT = {
+  FIRST_FEED: 0,
+  FIRST_PLAY: 1,
+  STEPS_1000: 2,
+  STEPS_8000: 3,
+  GOOD_SLEEP: 4,
+  ADULT: 5,
+}
+
+export const ACHIEVEMENT_TOTAL = 6
+const SLEEP_ENERGY_SECONDS = 8 * 3600 / 100
 
 const STAGE_NAMES = [
   'Ovo',
@@ -34,6 +48,15 @@ const STAGE_NAMES = [
   'Noturno',
   'Amigável',
   'Caótico',
+]
+
+const ACHIEVEMENT_NAMES = [
+  'Primeira comida',
+  'Primeira brincadeira',
+  '1.000 passos',
+  '8.000 passos',
+  'Sono 75+',
+  'Forma adulta',
 ]
 
 function clamp(value, min, max) {
@@ -89,6 +112,7 @@ export function createSave(nowSec) {
     gd: 0,
     bd: 0,
     hr: 0,
+    a: 0,
     d: [[now, EVENT.BORN, 0]],
   }
 }
@@ -119,6 +143,7 @@ export function sanitizeSave(raw, nowSec) {
   clean.gd = safeInt(raw.gd, 0, 0, 1000000)
   clean.bd = safeInt(raw.bd, 0, 0, 1000000)
   clean.hr = safeInt(raw.hr, 0, 0, 300)
+  clean.a = safeInt(raw.a, 0, 0, (1 << ACHIEVEMENT_TOTAL) - 1)
   clean.d = cleanDiary(raw.d)
   return clean
 }
@@ -132,6 +157,26 @@ export function addEvent(save, nowSec, type, value = 0) {
   if (save.d.length > MAX_DIARY_EVENTS) {
     save.d.splice(0, save.d.length - MAX_DIARY_EVENTS)
   }
+}
+
+export function unlockAchievement(save, nowSec, achievement) {
+  const id = safeInt(achievement, -1, 0, ACHIEVEMENT_TOTAL - 1)
+  if (id < 0) return false
+  const bit = 1 << id
+  if ((save.a & bit) !== 0) return false
+  save.a |= bit
+  addEvent(save, nowSec, EVENT.ACHIEVEMENT, id)
+  return true
+}
+
+export function achievementCount(save) {
+  let bits = save.a || 0
+  let count = 0
+  while (bits > 0) {
+    count += bits & 1
+    bits >>= 1
+  }
+  return count
 }
 
 export function stageName(stage) {
@@ -157,6 +202,13 @@ export function eventText(event, name = 'Milo') {
       return `Sono bom: ${event[2]}.`
     case EVENT.BAD_SLEEP:
       return `Sono baixo: ${event[2]}.`
+    case EVENT.USER_SLEEP: {
+      const hours = Math.floor(event[2] / 60)
+      const minutes = event[2] % 60
+      return `Dormiram ${hours}h${minutes < 10 ? '0' : ''}${minutes}.`
+    }
+    case EVENT.ACHIEVEMENT:
+      return `Conq: ${ACHIEVEMENT_NAMES[event[2]] || 'desconhecida'}.`
     default:
       return `${name} está por aqui.`
   }
@@ -183,21 +235,43 @@ export function updateEvolution(save, nowSec) {
   if (next === save.x) return false
   save.x = next
   addEvent(save, nowSec, EVENT.EVOLVED, next)
+  if (next >= STAGE.ADULT_NORMAL) {
+    unlockAchievement(save, nowSec, ACHIEVEMENT.ADULT)
+  }
   return true
 }
 
-export function applyElapsed(save, nowSec) {
+export function sleepCreditSeconds(save, snapshot, nowSec) {
+  const date = safeInt(snapshot.date, 0, 0, 99999999)
+  const minutes = safeInt(snapshot.sleepMinutes, 0, 0, 1440)
+  if (date === 0 || minutes === 0 || save.sp === date) return 0
+  const elapsed = clamp(Math.floor(nowSec - save.u), 0, 30 * 86400)
+  const age = clamp(Math.floor(nowSec - save.b), 0, 30 * 86400)
+  return Math.min(minutes * 60, elapsed, age)
+}
+
+export function applyElapsed(save, nowSec, userSleepSeconds = 0) {
   const elapsed = clamp(Math.floor(nowSec - save.u), 0, 30 * 86400)
   if (elapsed < 60) return updateEvolution(save, nowSec)
 
-  if (save.sl === 1) {
-    save.h = clamp(save.h - Math.floor(elapsed / 2700), 0, 100)
-    save.m = clamp(save.m - Math.floor(elapsed / 7200), 0, 100)
-    save.e = clamp(save.e + Math.floor(elapsed / 900), 0, 100)
-  } else {
-    save.h = clamp(save.h - Math.floor(elapsed / 1800), 0, 100)
-    save.m = clamp(save.m - Math.floor(elapsed / 3600), 0, 100)
-    save.e = clamp(save.e - Math.floor(elapsed / 2700), 0, 100)
+  const sleeping = save.sl === 1
+    ? elapsed
+    : clamp(Math.floor(userSleepSeconds), 0, elapsed)
+  const awake = elapsed - sleeping
+
+  if (awake > 0) {
+    save.h = clamp(save.h - Math.floor(awake / 1800), 0, 100)
+    save.m = clamp(save.m - Math.floor(awake / 3600), 0, 100)
+    save.e = clamp(save.e - Math.floor(awake / 2700), 0, 100)
+  }
+  if (sleeping > 0) {
+    save.h = clamp(save.h - Math.floor(sleeping / 2700), 0, 100)
+    save.m = clamp(save.m - Math.floor(sleeping / 7200), 0, 100)
+    save.e = clamp(
+      save.e + Math.floor(sleeping / SLEEP_ENERGY_SECONDS),
+      0,
+      100,
+    )
   }
   save.u = safeInt(nowSec, save.u, save.u, 2147483647)
   return updateEvolution(save, nowSec)
@@ -212,17 +286,30 @@ export function syncSensors(save, snapshot, nowSec) {
     save.td = date
     save.st = steps
     save.mx = Math.max(save.mx, steps)
+    if (steps >= 1000) {
+      unlockAchievement(save, nowSec, ACHIEVEMENT.STEPS_1000)
+    }
+    if (steps >= 8000) {
+      unlockAchievement(save, nowSec, ACHIEVEMENT.STEPS_8000)
+    }
     changed = true
   }
 
   const sleepScore = safeInt(snapshot.sleepScore, 0, 0, 100)
-  if (date > 0 && sleepScore > 0 && save.sp !== date) {
+  const sleepMinutes = safeInt(snapshot.sleepMinutes, 0, 0, 1440)
+  if (
+    date > 0 &&
+    sleepMinutes > 0 &&
+    save.sp !== date
+  ) {
     save.sp = date
-    save.ss = sleepScore
+    if (sleepScore > 0) save.ss = sleepScore
+    addEvent(save, nowSec, EVENT.USER_SLEEP, sleepMinutes)
     if (sleepScore >= 75) {
       save.gd += 1
       addEvent(save, nowSec, EVENT.GOOD_SLEEP, sleepScore)
-    } else {
+      unlockAchievement(save, nowSec, ACHIEVEMENT.GOOD_SLEEP)
+    } else if (sleepScore > 0) {
       save.bd += 1
       addEvent(save, nowSec, EVENT.BAD_SLEEP, sleepScore)
     }
@@ -252,6 +339,7 @@ export function performAction(save, action, nowSec, hour) {
     save.f += 1
     if (isNight) save.na += 1
     addEvent(save, nowSec, EVENT.FED)
+    unlockAchievement(save, nowSec, ACHIEVEMENT.FIRST_FEED)
   } else if (action === 'play') {
     save.m = clamp(save.m + 25, 0, 100)
     save.e = clamp(save.e - 12, 0, 100)
@@ -259,6 +347,7 @@ export function performAction(save, action, nowSec, hour) {
     save.p += 1
     if (isNight) save.na += 1
     addEvent(save, nowSec, EVENT.PLAYED)
+    unlockAchievement(save, nowSec, ACHIEVEMENT.FIRST_PLAY)
   } else if (action === 'sleep') {
     save.sl = save.sl === 1 ? 0 : 1
     addEvent(save, nowSec, save.sl === 1 ? EVENT.SLEPT : EVENT.WOKE)
@@ -271,6 +360,27 @@ export function performAction(save, action, nowSec, hour) {
     changed: true,
     message: eventText(save.d[save.d.length - 1], save.n),
   }
+}
+
+export function contextText(save, hour, nowSec) {
+  const latest = save.d[save.d.length - 1]
+  if (latest && nowSec - latest[0] < 8) {
+    return eventText(latest, save.n)
+  }
+  if (save.sl === 1) return `${save.n}: zZ...`
+  if (save.h <= 15) return `${save.n}: comida. agora.`
+  if (save.e <= 15) return `${save.n}: preciso dormir.`
+  if (save.m <= 15) return `${save.n}: vamos brincar?`
+  if (save.h <= 35) return `${save.n} está com fome.`
+  if (save.e <= 35) return `${save.n} está cansado.`
+  if (save.m <= 35) return `${save.n} quer atenção.`
+  if (hour < 6) return `${save.n}: por que acordados?`
+  if (hour >= 22) return `${save.n}: já está tarde.`
+  if (save.st >= 8000) return `${save.n}: caminhamos muito.`
+  if (Math.min(save.h, save.m, save.e) >= 85) {
+    return `${save.n} está muito bem.`
+  }
+  return `${save.n} observa você.`
 }
 
 export function ageText(save, nowSec) {

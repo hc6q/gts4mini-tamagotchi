@@ -14,6 +14,7 @@ Dados persistidos:
 - contadores de cuidado usados para evolução;
 - passos atuais e maior total diário observado;
 - último score de sono e agregados de dias bons ou baixos;
+- data do último sono processado e conquistas em um bitmask de seis bits;
 - última frequência cardíaca disponível;
 - até 15 eventos compactos do diário.
 
@@ -25,6 +26,8 @@ Dados não persistidos:
 - histórico de clima;
 - frames ou estado da animação;
 - textos completos do diário.
+
+A duração total do sono é consultada na abertura e processada no máximo uma vez por data. Ela recupera energia na mesma taxa do sono manual: 100 pontos em 8 horas. O diário recebe somente os números `[timestamp, tipo, minutos]`; nenhuma sequência de estágios é persistida.
 
 ## Gravação segura
 
