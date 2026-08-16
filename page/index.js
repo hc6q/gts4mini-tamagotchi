@@ -29,7 +29,6 @@ const TEXT_FACES = [
 ]
 
 const SLEEP_FACE = '(─‿‿─) zZ'
-const FACE_COUNT = TEXT_FACES.length + 1
 
 function textProps(x, y, w, h, size, color, align) {
   return {
@@ -75,34 +74,12 @@ function petFace(stage, sleeping) {
   return TEXT_FACES[stage] || TEXT_FACES[0]
 }
 
-function previewFace(index) {
-  if (index === TEXT_FACES.length) return SLEEP_FACE
-  return TEXT_FACES[index] || TEXT_FACES[0]
-}
-
-function petButtonProps(text, color) {
-  return {
-    x: 18,
-    y: 132,
-    w: 300,
-    h: 76,
-    radius: 0,
-    normal_color: BG,
-    press_color: PRESSED,
-    color,
-    text_size: 30,
-    text,
-  }
-}
-
 Page({
   state: {
     save: null,
     sensors: {},
     widgets: {},
     timerId: 0,
-    faceIndex: 0,
-    testingFaces: false,
   },
 
   onInit() {
@@ -113,7 +90,6 @@ Page({
 
     const snapshot = this.readSnapshot()
     this.state.save = loadPet(snapshot.now)
-    this.state.faceIndex = this.state.save.x
     applyElapsed(this.state.save, snapshot.now)
     syncSensors(this.state.save, snapshot, snapshot.now)
   },
@@ -176,9 +152,9 @@ Page({
       hmUI.widget.TEXT,
       textProps(24, 93, 288, 22, 16, GREEN, hmUI.align.LEFT),
     )
-    widgets.pet = hmUI.createWidget(hmUI.widget.BUTTON, {
-      ...petButtonProps(TEXT_FACES[0], GREEN),
-      click_func: () => this.cycleFace(),
+    widgets.pet = hmUI.createWidget(hmUI.widget.TEXT, {
+      ...textProps(18, 132, 300, 76, 30, GREEN, hmUI.align.CENTER_H),
+      align_v: hmUI.align.CENTER_V,
     })
 
     widgets.message = hmUI.createWidget(
@@ -229,26 +205,9 @@ Page({
 
   renderPet() {
     const save = this.state.save
-    const text = this.state.testingFaces
-      ? previewFace(this.state.faceIndex)
-      : petFace(save.x, save.sl === 1)
-    this.state.widgets.pet.setProperty(
-      hmUI.prop.MORE,
-      petButtonProps(text, save.sl === 1 ? DIM : GREEN),
-    )
-  },
-
-  cycleFace() {
-    if (!this.state.testingFaces) {
-      this.state.faceIndex = this.state.save.sl === 1
-        ? TEXT_FACES.length
-        : this.state.save.x
-      this.state.testingFaces = true
-    }
-    this.state.faceIndex = (this.state.faceIndex + 1) % FACE_COUNT
-    this.renderPet()
-    this.state.widgets.message.setProperty(hmUI.prop.MORE, {
-      text: `> ROSTO ${this.state.faceIndex + 1}/${FACE_COUNT}`,
+    this.state.widgets.pet.setProperty(hmUI.prop.MORE, {
+      text: petFace(save.x, save.sl === 1),
+      color: save.sl === 1 ? DIM : GREEN,
     })
   },
 

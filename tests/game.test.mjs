@@ -101,5 +101,5 @@ test('worst-case current save remains below the internal 10 KB target', () => {
     255,
     2147483647,
   ])
-  assert.ok(Buffer.byteLength(JSON.stringify(save)) < MAX_SAVE_BYTES)
+  assert.ok(JSON.stringify(save).length * 2 < MAX_SAVE_BYTES)
 })

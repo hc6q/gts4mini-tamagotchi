@@ -67,7 +67,8 @@ function createMockFs() {
 }
 
 function bytes(text) {
-  return Uint8Array.from(text, (character) => character.charCodeAt(0) & 0xff)
+  const units = Uint16Array.from(text, (character) => character.charCodeAt(0))
+  return new Uint8Array(units.buffer)
 }
 
 test('safe write validates then atomically promotes the temporary save', async () => {
@@ -78,6 +79,10 @@ test('safe write validates then atomically promotes the temporary save', async (
 
   assert.equal(storage.savePet(save), true)
   assert.ok(hmFS.files.has('pet.dat'))
+  assert.equal(
+    hmFS.files.get('pet.dat').length,
+    JSON.stringify(save).length * 2,
+  )
   assert.equal(hmFS.files.has('pet.tmp'), false)
   assert.equal(hmFS.files.has('pet.bak'), false)
 
@@ -98,4 +103,23 @@ test('startup recovers a valid backup when the principal file is corrupt', async
   assert.equal(recovered.m, 44)
   assert.ok(hmFS.files.has('pet.dat'))
   assert.equal(hmFS.files.has('pet.tmp'), false)
+})
+
+test('needs survive diary navigation and a fresh app runtime', async () => {
+  globalThis.hmFS = createMockFs()
+  const mainPage = await import('../utils/storage.js?main-page')
+  const save = createSave(3000)
+  save.h = 31
+  save.m = 47
+  save.e = 59
+
+  assert.equal(mainPage.savePet(save), true)
+
+  const diaryPage = await import('../utils/storage.js?diary-page')
+  const inDiary = diaryPage.loadPet(3010)
+  assert.deepEqual([inDiary.h, inDiary.m, inDiary.e], [31, 47, 59])
+
+  const reopenedApp = await import('../utils/storage.js?reopened-app')
+  const afterReopen = reopenedApp.loadPet(3020)
+  assert.deepEqual([afterReopen.h, afterReopen.m, afterReopen.e], [31, 47, 59])
 })

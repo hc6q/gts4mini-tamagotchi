@@ -113,7 +113,7 @@ async function estimatedSaveSize() {
     255,
     2147483647,
   ])
-  return Buffer.byteLength(JSON.stringify(save))
+  return JSON.stringify(save).length * 2
 }
 
 async function main() {

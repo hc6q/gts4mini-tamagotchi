@@ -12,7 +12,6 @@ Tamagotchi compacto para o Amazfit GTS 4 Mini. O Mini Program foi projetado para
 - Save único e compacto em `/data/pet.dat`.
 - Gravação segura com arquivo temporário, validação, backup e `hmFS.rename`.
 - Interface de terminal com rostos de texto compactos, medidores e separadores em ASCII.
-- Toque temporário no rosto para percorrer os dez rostos durante o teste físico.
 - Barra de status oculta e controles sem grandes blocos preenchidos.
 - Um único PNG de 64 × 64 para o ícone obrigatório do aplicativo.
 - Zero sprites de personagem, áudio, vídeo, GIF, fonte customizada ou dependência de runtime.
@@ -65,7 +64,7 @@ O save usa chaves curtas. Um evento do diário ocupa três números:
 [timestamp, eventType, value]
 ```
 
-Os textos ficam no código e são montados somente na interface. O pior caso atual estimado do save ocupa menos de 1 KB. Durante uma gravação segura podem existir temporariamente `pet.dat`, `pet.tmp` e `pet.bak`.
+Os textos ficam no código e são montados somente na interface. O pior caso atual estimado do save ocupa 1,24 KB no formato `Uint16Array` usado pelo Zepp OS 1.0. Durante uma gravação segura podem existir temporariamente `pet.dat`, `pet.tmp` e `pet.bak`.
 
 Permadeath não está ativo nesta versão. Por isso não existe cemitério ou estrutura persistente sem uso.
 

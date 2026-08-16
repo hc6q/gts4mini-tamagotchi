@@ -4,6 +4,8 @@
 
 O aplicativo mantém um único objeto JSON em `/data/pet.dat`. As chaves são curtas porque o arquivo é escrito diretamente no relógio.
 
+O JSON é convertido para `Uint16Array`, com dois bytes por caractere, seguindo o exemplo oficial de persistência do Zepp OS 1.0. Isso evita que a página do diário ou uma nova execução interpretem o save em um formato diferente.
+
 Dados persistidos:
 
 - versão do schema;
@@ -59,13 +61,13 @@ Build gerado com Zeus CLI 1.9.3 e produto intermediário removido por `zeus prun
 
 | Medida | Tamanho real |
 |---|---:|
-| ZAB | 13,27 KB (13.592 B) |
-| JavaScript-fonte do app | 20,14 KB (20.624 B) |
-| Código compilado | 19,48 KB (19.952 B) |
+| ZAB | 13,02 KB (13.333 B) |
+| JavaScript-fonte do app | 19,22 KB (19.680 B) |
+| Código compilado | 18,95 KB (19.400 B) |
 | Assets no payload | 5,06 KB (5.184 B) |
 | Assets-fonte | 199 B |
-| Payload instalado | 25,29 KB (25.899 B) |
-| Save estimado | 633 B |
-| Pico temporário de escrita segura | 1,85 KB (1.899 B) |
+| Payload instalado | 24,75 KB (25.347 B) |
+| Save estimado | 1,24 KB (1.266 B) |
+| Pico temporário de escrita segura | 3,71 KB (3.798 B) |
 
-Maior arquivo-fonte do app: `page/index.js`, 7,87 KB. Maior arquivo no payload: `page/index.bin`, 12,44 KB. Único asset: ícone obrigatório do app. Sprites de personagem: 0.
+Maior arquivo-fonte do app: `page/index.js`, 6,92 KB. Maior arquivo no payload: `page/index.bin`, 11,89 KB. Único asset: ícone obrigatório do app. Sprites de personagem: 0.
