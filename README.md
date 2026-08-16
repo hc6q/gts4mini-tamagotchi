@@ -69,6 +69,8 @@ Os textos ficam no código e são montados somente na interface. O pior caso atu
 
 Quando a persistência falha, a tela mostra `SAVE E##` para identificar a etapa exata no relógio físico.
 
+A confirmação da escrita usa a releitura do arquivo e a remoção usa `hmFS.stat`. O app não depende de `hmFS.remove`, `hmFS.read`, `hmFS.write` ou `hmFS.close` retornarem `0`, porque o firmware do GTS 4 Mini pode concluir a operação sem devolver esse valor ao JavaScript.
+
 Permadeath não está ativo nesta versão. Por isso não existe cemitério ou estrutura persistente sem uso.
 
 ## Metas internas

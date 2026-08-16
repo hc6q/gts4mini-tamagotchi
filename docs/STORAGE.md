@@ -32,16 +32,17 @@ Dados não persistidos:
 2. Recusa conteúdo acima da meta interna de 10 KB.
 3. Remove um temporário antigo.
 4. Abre cada arquivo com `O_RDWR | O_CREAT`, sem combinar `O_CREAT` e `O_TRUNC`.
-5. Escreve e valida `pet.tmp`.
-6. Escreve `pet.dat` diretamente com `hmFS.write`.
-7. Lê e valida o save principal.
-8. Mantém `pet.tmp` se a gravação principal falhar.
-9. Remove temporário e backup antigo depois do sucesso.
-10. Na inicialização, tenta temporário, principal e backup, nessa ordem.
+5. Se a primeira escrita não puder ser validada, reabre o arquivo existente com `O_RDWR | O_TRUNC`, como no exemplo oficial de persistência.
+6. Escreve e valida `pet.tmp`.
+7. Escreve `pet.dat` diretamente com `hmFS.write`.
+8. Confirma remoções com `hmFS.stat` e compara os bytes gravados, sem depender do valor retornado por `hmFS.remove`, `hmFS.read`, `hmFS.write` ou `hmFS.close`.
+9. Mantém `pet.tmp` se a gravação principal falhar.
+10. Remove temporário e backup antigo depois do sucesso.
+11. Na inicialização, tenta temporário, principal e backup, nessa ordem.
 
 O fluxo não depende mais de `hmFS.rename`. O pico conservador continua sendo três vezes o tamanho do save. No estado normal existe somente `pet.dat`.
 
-Se uma operação falhar, a tela principal mostra `SAVE E##`. Códigos `11` a `16` indicam falha no temporário e `21` a `26` no save principal. O último dígito identifica tamanho, remoção, abertura, escrita, fechamento ou validação, nessa ordem.
+Se uma operação falhar, a tela principal mostra `SAVE E##`. Códigos `11` a `16` indicam falha no temporário e `21` a `26` no save principal. O conteúdo relido é a confirmação final da gravação. Um retorno não numérico da API não é tratado sozinho como erro.
 
 ## Auditoria
 

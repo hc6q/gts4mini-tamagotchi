@@ -13,7 +13,8 @@ function exists(path) {
 
 function remove(path) {
   if (!exists(path)) return true
-  return hmFS.remove(path) === 0
+  hmFS.remove(path)
+  return !exists(path)
 }
 
 function encode(text) {
@@ -44,9 +45,9 @@ function readText(path) {
   if (file < 0) return ''
 
   hmFS.seek(file, 0, hmFS.SEEK_SET)
-  const result = hmFS.read(file, units.buffer, 0, size)
+  hmFS.read(file, units.buffer, 0, size)
   hmFS.close(file)
-  return result === 0 ? decode(units) : ''
+  return decode(units)
 }
 
 function readSave(path, nowSec) {
@@ -66,14 +67,32 @@ function writeText(path, text) {
   if (units.byteLength > MAX_SAVE_BYTES) return 1
   if (!remove(path)) return 2
 
-  const file = hmFS.open(path, hmFS.O_RDWR | hmFS.O_CREAT)
-  if (file < 0) return 3
+  const flags = [
+    hmFS.O_RDWR | hmFS.O_CREAT,
+    hmFS.O_RDWR | hmFS.O_TRUNC,
+  ]
+  let opened = false
+  let writeResult
+  let closeResult
 
-  const result = hmFS.write(file, units.buffer, 0, units.byteLength)
-  const closeResult = hmFS.close(file)
-  if (result !== 0) return 4
-  if (closeResult !== 0) return 5
-  return readText(path) === text ? 0 : 6
+  for (let index = 0; index < flags.length; index += 1) {
+    const file = hmFS.open(path, flags[index])
+    if (file < 0) continue
+    opened = true
+    writeResult = hmFS.write(
+      file,
+      units.buffer,
+      0,
+      units.byteLength,
+    )
+    closeResult = hmFS.close(file)
+    if (readText(path) === text) return 0
+  }
+
+  if (!opened) return 3
+  if (typeof writeResult === 'number' && writeResult !== 0) return 4
+  if (typeof closeResult === 'number' && closeResult !== 0) return 5
+  return 6
 }
 
 export function getStorageError() {

@@ -15,6 +15,7 @@ function createMockFs() {
     SEEK_SET: 0,
     files,
     failOpenFor: new Set(),
+    failNextWritesFor: new Map(),
     failWritesFor: new Set(),
     stat(path) {
       const data = files.get(path)
@@ -37,7 +38,6 @@ function createMockFs() {
     },
     close(id) {
       handles.delete(id)
-      return 0
     },
     seek(id, position) {
       handles.get(id).position = position
@@ -50,18 +50,21 @@ function createMockFs() {
         offset,
       )
       handle.position += length
-      return 0
     },
     write(id, buffer, offset, length) {
       const handle = handles.get(id)
       if (api.failWritesFor.has(handle.path)) return -1
+      const remainingFailures = api.failNextWritesFor.get(handle.path) || 0
+      if (remainingFailures > 0) {
+        api.failNextWritesFor.set(handle.path, remainingFailures - 1)
+        return -14
+      }
       const source = new Uint8Array(buffer).slice(offset, offset + length)
       files.set(handle.path, source)
       handle.position += length
-      return 0
     },
     remove(path) {
-      return files.delete(path) ? 0 : -1
+      files.delete(path)
     },
     rename(oldPath, newPath) {
       throw new Error(`rename must not be used: ${oldPath} -> ${newPath}`)
@@ -75,7 +78,7 @@ function bytes(text) {
   return new Uint8Array(units.buffer)
 }
 
-test('safe write validates temporary and principal files without rename', async () => {
+test('readback validates writes when successful hmFS calls return void', async () => {
   globalThis.hmFS = createMockFs()
   const storage = await import('../utils/storage.js?write-test')
   const save = createSave(1000)
@@ -159,4 +162,15 @@ test('storage error identifies a failed temporary open', async () => {
   assert.equal(storage.getStorageError(), 13)
   assert.equal(hmFS.files.has('pet.tmp'), false)
   assert.equal(hmFS.files.has('pet.dat'), false)
+})
+
+test('write retries with the official truncate flow after a create failure', async () => {
+  globalThis.hmFS = createMockFs()
+  hmFS.failNextWritesFor.set('pet.tmp', 1)
+  const storage = await import('../utils/storage.js?write-retry')
+
+  assert.equal(storage.savePet(createSave(6000)), true)
+  assert.equal(storage.getStorageError(), 0)
+  assert.ok(hmFS.files.has('pet.dat'))
+  assert.equal(hmFS.files.has('pet.tmp'), false)
 })
