@@ -12,6 +12,7 @@ Tamagotchi compacto para o Amazfit GTS 4 Mini. O Mini Program foi projetado para
 - Save único e compacto em `/data/pet.dat`.
 - Gravação segura com arquivo temporário, validação, backup e `hmFS.rename`.
 - Interface de terminal com rostos de texto compactos, medidores e separadores em ASCII.
+- Toque temporário no rosto para percorrer os dez rostos durante o teste físico.
 - Barra de status oculta e controles sem grandes blocos preenchidos.
 - Um único PNG de 64 × 64 para o ícone obrigatório do aplicativo.
 - Zero sprites de personagem, áudio, vídeo, GIF, fonte customizada ou dependência de runtime.
