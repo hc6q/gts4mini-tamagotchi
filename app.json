@@ -1,0 +1,55 @@
+{
+  "configVersion": "v2",
+  "app": {
+    "appId": 20000,
+    "appName": "GTS Gotchi",
+    "appType": "app",
+    "version": {
+      "code": 1,
+      "name": "0.1.0"
+    },
+    "icon": "icon.png",
+    "vender": "hc6q",
+    "description": "A tiny code-drawn virtual pet for Amazfit GTS 4 Mini"
+  },
+  "permissions": [],
+  "runtime": {
+    "apiVersion": {
+      "compatible": "1.0.0",
+      "target": "1.0.0",
+      "minVersion": "1.0.0"
+    }
+  },
+  "targets": {
+    "gts-4-mini": {
+      "module": {
+        "page": {
+          "pages": [
+            "page/index",
+            "page/diary"
+          ]
+        }
+      },
+      "platforms": [
+        {
+          "name": "gts4-mini",
+          "deviceSource": 246
+        },
+        {
+          "name": "gts4-mini-w",
+          "deviceSource": 247
+        }
+      ],
+      "designWidth": 336
+    }
+  },
+  "i18n": {
+    "pt-BR": {
+      "appName": "GTS Gotchi"
+    },
+    "en-US": {
+      "appName": "GTS Gotchi"
+    }
+  },
+  "defaultLanguage": "pt-BR"
+}
