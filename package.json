@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20",
+    "npm": ">=9"
+  },
   "scripts": {
     "build": "zeus build && zeus prune --ip && node tools/storage-report.cjs",
     "build:zab": "zeus build && zeus prune --ip",

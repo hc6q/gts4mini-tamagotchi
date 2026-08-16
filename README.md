@@ -30,8 +30,16 @@ O `appId` atual, `20000`, é apenas um identificador de desenvolvimento. Troque 
 
 Requisitos:
 
-- Node.js 18 ou mais recente recomendado para executar build, auditoria e testes.
+- Node.js 20 ou mais recente. Node.js 22 LTS é recomendado.
 - Zeus CLI instalado globalmente.
+
+No Linux, use NVM para instalar o Node no seu usuário. Isso evita erros de permissão em `/usr/local`:
+
+```bash
+nvm install
+nvm use
+npm install -g @zeppos/zeus-cli
+```
 
 ```bash
 npm install -g @zeppos/zeus-cli
