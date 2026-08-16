@@ -11,6 +11,7 @@ Tamagotchi compacto para o Amazfit GTS 4 Mini. O Mini Program foi projetado para
 - Diário numérico limitado a 15 eventos.
 - Save único e compacto em `/data/pet.dat`.
 - Gravação verificada com arquivo temporário, recuperação e escrita direta do save principal.
+- Abertura compatível com Zepp OS 1.0, sem combinar `O_CREAT` e `O_TRUNC`.
 - Interface de terminal com rostos de texto compactos, medidores e separadores em ASCII.
 - Barra de status oculta e controles sem grandes blocos preenchidos.
 - Um único PNG de 64 × 64 para o ícone obrigatório do aplicativo.
@@ -65,6 +66,8 @@ O save usa chaves curtas. Um evento do diário ocupa três números:
 ```
 
 Os textos ficam no código e são montados somente na interface. O pior caso atual estimado do save ocupa 1,24 KB no formato `Uint16Array` usado pelo Zepp OS 1.0. Durante uma gravação podem coexistir temporariamente `pet.dat` e `pet.tmp`. Um `pet.bak` antigo ainda pode ser lido para recuperação.
+
+Quando a persistência falha, a tela mostra `SAVE E##` para identificar a etapa exata no relógio físico.
 
 Permadeath não está ativo nesta versão. Por isso não existe cemitério ou estrutura persistente sem uso.
 

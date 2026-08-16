@@ -4,6 +4,7 @@ const SAVE_FILE = 'pet.dat'
 const TEMP_FILE = 'pet.tmp'
 const BACKUP_FILE = 'pet.bak'
 let lastWrittenText = ''
+let lastError = 0
 
 function exists(path) {
   const result = hmFS.stat(path)
@@ -11,7 +12,8 @@ function exists(path) {
 }
 
 function remove(path) {
-  if (exists(path)) hmFS.remove(path)
+  if (!exists(path)) return true
+  return hmFS.remove(path) === 0
 }
 
 function encode(text) {
@@ -61,29 +63,38 @@ function readSave(path, nowSec) {
 
 function writeText(path, text) {
   const units = encode(text)
-  if (units.byteLength > MAX_SAVE_BYTES) return false
-  const file = hmFS.open(
-    path,
-    hmFS.O_RDWR | hmFS.O_CREAT | hmFS.O_TRUNC,
-  )
-  if (file < 0) return false
+  if (units.byteLength > MAX_SAVE_BYTES) return 1
+  if (!remove(path)) return 2
+
+  const file = hmFS.open(path, hmFS.O_RDWR | hmFS.O_CREAT)
+  if (file < 0) return 3
 
   const result = hmFS.write(file, units.buffer, 0, units.byteLength)
-  hmFS.close(file)
-  return result === 0 && readText(path) === text
+  const closeResult = hmFS.close(file)
+  if (result !== 0) return 4
+  if (closeResult !== 0) return 5
+  return readText(path) === text ? 0 : 6
+}
+
+export function getStorageError() {
+  return lastError
 }
 
 export function savePet(save) {
   const text = JSON.stringify(save)
+  lastError = 0
   if (text === lastWrittenText) return true
 
-  remove(TEMP_FILE)
-  if (!writeText(TEMP_FILE, text)) {
+  const tempResult = writeText(TEMP_FILE, text)
+  if (tempResult !== 0) {
+    lastError = 10 + tempResult
     remove(TEMP_FILE)
     return false
   }
 
-  if (!writeText(SAVE_FILE, text)) {
+  const mainResult = writeText(SAVE_FILE, text)
+  if (mainResult !== 0) {
+    lastError = 20 + mainResult
     remove(SAVE_FILE)
     return false
   }

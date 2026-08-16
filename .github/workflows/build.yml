@@ -1,0 +1,22 @@
+name: Test and build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gts-4-mini:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global @zeppos/zeus-cli@1.9.3
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gts-gotchi-zab
+          path: dist/*.zab
+          if-no-files-found: error

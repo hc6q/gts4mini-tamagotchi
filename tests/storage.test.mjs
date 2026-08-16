@@ -14,12 +14,17 @@ function createMockFs() {
     O_TRUNC: 8,
     SEEK_SET: 0,
     files,
+    failOpenFor: new Set(),
     failWritesFor: new Set(),
     stat(path) {
       const data = files.get(path)
       return data ? [{ size: data.length, mtime: 0 }, 0] : [null, -1]
     },
     open(path, flags) {
+      if ((flags & api.O_CREAT) && (flags & api.O_TRUNC)) {
+        throw new Error('O_CREAT and O_TRUNC must not be combined')
+      }
+      if (api.failOpenFor.has(path)) return -1
       if (!files.has(path) && (flags & api.O_CREAT)) {
         files.set(path, new Uint8Array())
       }
@@ -133,6 +138,7 @@ test('a valid temporary file recovers a failed principal write', async () => {
   hmFS.failWritesFor.add('pet.dat')
 
   assert.equal(firstRuntime.savePet(save), false)
+  assert.equal(firstRuntime.getStorageError(), 24)
   assert.ok(hmFS.files.has('pet.tmp'))
   assert.equal(hmFS.files.has('pet.dat'), false)
 
@@ -142,4 +148,15 @@ test('a valid temporary file recovers a failed principal write', async () => {
   assert.deepEqual([recovered.h, recovered.m, recovered.e], [22, 33, 44])
   assert.ok(hmFS.files.has('pet.dat'))
   assert.equal(hmFS.files.has('pet.tmp'), false)
+})
+
+test('storage error identifies a failed temporary open', async () => {
+  globalThis.hmFS = createMockFs()
+  hmFS.failOpenFor.add('pet.tmp')
+  const storage = await import('../utils/storage.js?open-failure')
+
+  assert.equal(storage.savePet(createSave(5000)), false)
+  assert.equal(storage.getStorageError(), 13)
+  assert.equal(hmFS.files.has('pet.tmp'), false)
+  assert.equal(hmFS.files.has('pet.dat'), false)
 })

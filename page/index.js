@@ -6,7 +6,7 @@ import {
   stageName,
   syncSensors,
 } from '../utils/game.js'
-import { loadPet, savePet } from '../utils/storage.js'
+import { getStorageError, loadPet, savePet } from '../utils/storage.js'
 
 const WIDTH = 336
 const BG = 0x030604
@@ -184,7 +184,7 @@ Page({
       click_func: () => {
         if (!this.persist()) {
           widgets.message.setProperty(hmUI.prop.MORE, {
-            text: '> ERRO SAVE',
+            text: `> SAVE E${getStorageError()}`,
           })
           return
         }
@@ -269,7 +269,7 @@ Page({
     this.render()
     if (!saved) {
       this.state.widgets.message.setProperty(hmUI.prop.MORE, {
-        text: '> ERRO SAVE',
+        text: `> SAVE E${getStorageError()}`,
       })
     }
   },
