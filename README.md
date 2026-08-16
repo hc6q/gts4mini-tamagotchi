@@ -11,7 +11,8 @@ Tamagotchi compacto para o Amazfit GTS 4 Mini. O Mini Program foi projetado para
 - Diário numérico limitado a 15 eventos.
 - Save único e compacto em `/data/pet.dat`.
 - Gravação segura com arquivo temporário, validação, backup e `hmFS.rename`.
-- Pet, cenário, barras e botões desenhados por código.
+- Interface de terminal com pet, medidores e separadores em ASCII.
+- Barra de status oculta e controles sem grandes blocos preenchidos.
 - Um único PNG de 64 × 64 para o ícone obrigatório do aplicativo.
 - Zero sprites de personagem, áudio, vídeo, GIF, fonte customizada ou dependência de runtime.
 

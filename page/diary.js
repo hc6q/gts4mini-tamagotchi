@@ -1,9 +1,26 @@
-import { eventText } from '../utils/game.js'
+import { eventText, MAX_DIARY_EVENTS } from '../utils/game.js'
 import { loadPet } from '../utils/storage.js'
 
-const BG = 0x0b1118
-const TEXT = 0xf4f7fb
-const MUTED = 0x93a4b8
+const BG = 0x030604
+const TEXT = 0xe7ffed
+const GREEN = 0x8bf0a8
+const DIM = 0x4e8b60
+const PRESSED = 0x102a18
+
+function textProps(x, y, w, h, size, color, align) {
+  return {
+    x,
+    y,
+    w,
+    h,
+    color,
+    text_size: size,
+    align_h: align,
+    align_v: hmUI.align.CENTER_V,
+    text_style: hmUI.text_style.ELLIPSIS,
+    text: '',
+  }
+}
 
 Page({
   state: {
@@ -17,6 +34,7 @@ Page({
   },
 
   build() {
+    hmUI.setStatusBarVisible(false)
     hmUI.createWidget(hmUI.widget.FILL_RECT, {
       x: 0,
       y: 0,
@@ -25,60 +43,45 @@ Page({
       color: BG,
     })
     hmUI.createWidget(hmUI.widget.TEXT, {
-      x: 48,
-      y: 7,
-      w: 240,
-      h: 30,
-      color: TEXT,
-      text_size: 21,
-      align_h: hmUI.align.CENTER_H,
-      align_v: hmUI.align.CENTER_V,
-      text_style: hmUI.text_style.NONE,
-      text: 'Diário compacto',
+      ...textProps(18, 10, 300, 27, 18, TEXT, hmUI.align.LEFT),
+      text: '> DIARIO.LOG',
+    })
+    hmUI.createWidget(hmUI.widget.TEXT, {
+      ...textProps(18, 38, 300, 12, 12, DIM, hmUI.align.CENTER_H),
+      text: '--------------------------------',
     })
 
-    const diary = this.state.save.d.slice(-10).reverse()
+    const diary = this.state.save.d.slice(-7).reverse()
     if (diary.length === 0) {
       hmUI.createWidget(hmUI.widget.TEXT, {
-        x: 24,
-        y: 120,
-        w: 288,
-        h: 40,
-        color: MUTED,
-        text_size: 18,
-        align_h: hmUI.align.CENTER_H,
-        align_v: hmUI.align.CENTER_V,
-        text_style: hmUI.text_style.NONE,
-        text: 'Nenhum evento ainda.',
+        ...textProps(18, 150, 300, 30, 17, DIM, hmUI.align.CENTER_H),
+        text: '> SEM EVENTOS',
       })
     }
 
     diary.forEach((item, index) => {
+      const number = index < 9 ? `0${index + 1}` : `${index + 1}`
       hmUI.createWidget(hmUI.widget.TEXT, {
-        x: 18,
-        y: 43 + index * 28,
-        w: 300,
-        h: 26,
-        color: index === 0 ? TEXT : MUTED,
-        text_size: 16,
-        align_h: hmUI.align.LEFT,
-        align_v: hmUI.align.CENTER_V,
-        text_style: hmUI.text_style.ELLIPSIS,
-        text: `${index + 1}. ${eventText(item, this.state.save.n)}`,
+        ...textProps(18, 57 + index * 36, 300, 30, 15, index === 0 ? GREEN : DIM, hmUI.align.LEFT),
+        text: `${number}> ${eventText(item, this.state.save.n)}`,
       })
     })
 
+    hmUI.createWidget(hmUI.widget.TEXT, {
+      ...textProps(18, 310, 300, 20, 13, DIM, hmUI.align.CENTER_H),
+      text: `EVENTOS:${this.state.save.d.length}/${MAX_DIARY_EVENTS}`,
+    })
     hmUI.createWidget(hmUI.widget.BUTTON, {
-      x: 70,
-      y: 337,
-      w: 196,
-      h: 39,
-      radius: 10,
-      normal_color: 0x26384b,
-      press_color: 0x3b5874,
-      color: TEXT,
-      text_size: 17,
-      text: 'VOLTAR',
+      x: 88,
+      y: 344,
+      w: 160,
+      h: 30,
+      radius: 0,
+      normal_color: BG,
+      press_color: PRESSED,
+      color: GREEN,
+      text_size: 15,
+      text: '[ VOLTAR ]',
       click_func: () => hmApp.goBack(),
     })
   },
