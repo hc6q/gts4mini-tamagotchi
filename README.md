@@ -92,4 +92,4 @@ A documentação oficial consultada não publica um limite máximo para o ZAB ne
 - Ainda precisa de teste no GTS 4 Mini físico.
 - Não tem edição do nome do pet.
 - Não tem clima, permadeath ou cemitério.
-- O diário mostra os 10 eventos mais recentes, embora retenha até 15.
+- O diário mostra os 7 eventos mais recentes, embora retenha até 15.
